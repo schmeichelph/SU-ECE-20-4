@@ -1,3 +1,8 @@
+###Recognition working with manual ROI blur score
+
+
+
+
 """
 Authors: Ross Pitman, Jack Gularte, Devin DeWitt
 File: recognition.py
