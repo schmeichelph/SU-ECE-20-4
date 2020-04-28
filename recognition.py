@@ -51,6 +51,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from PIL import Image
 import markov_clustering as mc
+import networkx as nx
 ########################### END IMPORTS ########################################
 
 # CLASS DEFINITION
@@ -129,19 +130,32 @@ def check_matrix(rec_list, score_matrix):
         print("Misses: {0}; Avg. Miss: {1}".format(miss_count, miss/miss_count))
     except ZeroDivisionError:
         print("Misses: 0; Avg. Miss: 0")
-
+################################################################################
+def markov_cluster(score_matrix):
+    
+    #cluster_graph_one = np.asarray(score_matrix)
+    #cluster_graph = nx.to_numpy_matrix(cluster_graph_one)
+    result = mc.run_mcl(score_matrix)           # run MCL with default parameters
+    clusters = mc.get_clusters(result)
+    print("results of cluster: ", result)
+    print("clusters: ", clusters)
+    mc.draw_graph(score_matrix, clusters, node_size=50, with_labels=True, edge_color="silver")   
+    #mc.draw_graph(score_matrix,clusters)
+    #cv2.imwrite("/Users/tonycaballero/Downloadds/SU-ECE-20-4-master/Image_Sets/quick_set/cluster_graph.jpg",cluster_show)
+    print("Successful write")
 ################################################################################
 def normailze_matrix(score_matrix):
     'Used to normalize the score matrix with respect to the highest value present'
 
     # get max score
-    max_matrix = score_matrix.max()
+    #max_matrix = score_matrix.max()
 
     # normalize
-    score_matrix = score_matrix / max_matrix
+    #score_matrix = score_matrix / max_matrix
 
     # add identity matrix
-    score_matrix = score_matrix + np.identity(len(score_matrix[1]))
+    #score_matrix = score_matrix + np.identity(len(score_matrix[1]))
+    markov_cluster(score_matrix)
     return score_matrix
 
 ################################################################################
@@ -350,12 +364,7 @@ def filter_images(primary_image,image_source):
             break
         i += 1
     
-################################################################################
-def markov_cluster(key_points):
-    result = mc.run_mcl(key_points)           # run MCL with default parameters
-    clusters = mc.get_clusters(result)
-    
-    mc.draw_graph(key_points, clusters, pos=key_points, node_size=50, with_labels=False, edge_color="silver")    
+ 
 
 ################################################################################
 def match(primary_images, secondary_images, image_destination,
@@ -375,6 +384,10 @@ def match(primary_images, secondary_images, image_destination,
         mySift = cv2.xfeatures2d.SIFT_create()
         kp_1, desc_1 = mySift.detectAndCompute(primary_images[primary_count].image, mask_1)
         #print("kp1 and descrip 1: ", kp_1, desc_1)
+        # desc_array = np.asarray(desc_1)
+        # for i in range(0,10):
+        #     print("desc_array ", i , " ", desc_array[i])
+        #     print("desc_array min: ",i, " ",np.amax(desc_array[i]))
 
         # paramter setup and create nearest nieghbor matcher
         index_params = dict(algorithm = 0, trees = 5)
@@ -394,14 +407,14 @@ def match(primary_images, secondary_images, image_destination,
 
                  
                  # This section is for the presentation only, remove later
-                 temp1 = cv2.resize(rec_list[primary_count].image, (960, 540))
-                 temp2 = cv2.resize(rec_list[secondary_count].image, (960, 540))
+                 #temp1 = cv2.resize(rec_list[primary_count].image, (960, 540))
+                 #temp2 = cv2.resize(rec_list[secondary_count].image, (960, 540))
 
 
-                 horiz = np.hstack((temp1, temp2))
-                 cv2.imshow("mathced image to tempalte", horiz)
-                 cv2.waitKey(500)
-                 cv2.destroyAllWindows()
+                 #horiz = np.hstack((temp1, temp2))
+                 #cv2.imshow("mathced image to tempalte", horiz)
+                 #cv2.waitKey(500)
+                 #cv2.destroyAllWindows()
                  
                  # end 
 
@@ -418,37 +431,37 @@ def match(primary_images, secondary_images, image_destination,
                      for m, n in matches:
                          if m.distance < 0.7 * n.distance:
                              good_points.append(m)
-                             descriptors.append(desc_1[primary_count])
+                             #descriptors.append(desc_1[primary_count])
                              #print("good descriptor 1: ", desc_1)
                              #print("good descriptor 2: ", desc_2)
 
-                     print("Length of descriptors: ", len(descriptors))
-                     new_arr = np.asarray(descriptors)
-                     print("shape new array: ", new_arr.shape)
-                     print("number of dimensions: ", new_arr.ndim)
-                     if(new_arr.ndim == 2):
+                     # print("Length of descriptors: ", len(descriptors))
+                     # new_arr = np.asarray(descriptors)
+                     # print("shape new array: ", new_arr.shape)
+                     # print("number of dimensions: ", new_arr.ndim)
+                     # if(new_arr.ndim == 2):
                      
-                        x, y = new_arr.shape
-                        z = y-x
-                        #print("x: ", x, "y: ", y, "z: ", z)
-                        if(z > y):
-                            z = x-y
-                            ones_array = np.ones((z,y))
-                            mark_array = np.concatenate((new_arr,ones_array),axis = 0)
-                        else:
-                        #new_arr2 = np.reshape(new_arr,(x,y))
-                        #print("shape new array 2: ", new_arr2.shape)
-                            ones_array = np.ones((z,y))
-                            print("shape ones array: ", ones_array.shape)
+                     #    x, y = new_arr.shape
+                     #    z = y-x
+                     #    print("x: ", x, "y: ", y, "z: ", z)
+                     #    if(z > y):
+                     #        z = x-y
+                     #        ones_array = np.ones((z,y))
+                     #        mark_array = np.concatenate((new_arr,ones_array),axis = 0)
+                     #    else:
+                     #    new_arr2 = np.reshape(new_arr,(x,y))
+                     #    print("shape new array 2: ", new_arr2.shape)
+                     #        ones_array = np.ones((z,y))
+                     #        print("shape ones array: ", ones_array.shape)
                         
-                            mark_array = np.concatenate((new_arr,ones_array),axis = 0)
-                        #mark_array = np.multiply(ones_array, new_arr)
+                     #        mark_array = np.concatenate((new_arr,ones_array),axis = 0)
+                     #    mark_array = np.multiply(ones_array, new_arr)
                         
-                        #np.pad(new_arr,(0,(y-x)),'constant',constant_values = (0))
-                        print("mark array: ", mark_array)
-                        print("mark array size: ", mark_array.shape)
-                        markov_cluster(mark_array)
-                     print("shape of descriptors: ", new_arr.shape)
+                     #    np.pad(new_arr,(0,(y-x)),'constant',constant_values = (0))
+                     #    print("mark array: ", mark_array)
+                     #    print("mark array size: ", mark_array.shape)
+                     #    markov_cluster(mark_array)
+                     # print("shape of descriptors: ", new_arr.shape)
                      
                      # RANSAC
                      
@@ -703,7 +716,7 @@ def init_Recognition(image_source, template_source):
         
         rec_list[count].add_image(i, image)
 
-        filter_images(image,i)
+        #filter_images(image,i)
 
         # get title characteristics
         station, camera, date, time = getTitleChars(i)
