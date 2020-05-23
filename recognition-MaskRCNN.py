@@ -50,18 +50,17 @@ import cv2
 import numpy as np
 
 # mask-rcnn
-#   import os
-#   import sys
 import random
 import math
-#   import re
-#   import time
 import numpy as np
 import tensorflow as tf
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import skimage.io
+
+
+# EDIT PATHS FOR MASK R-CNN LIBRARY FOLDER ################################################################################
 # Root directory of the project
 #ROOT_DIR = os.path.abspath("../..")
 ROOT_DIR = "Mask_RCNN-master"
@@ -76,7 +75,6 @@ from mrcnn.model import log
 from samples.snow_leopard import snow_leopard
 
 #%matplotlib inline 
-
 # Directory to save logs and trained model
 MODEL_DIR = os.path.join(ROOT_DIR, "logs")
 
@@ -84,6 +82,8 @@ MODEL_DIR = os.path.join(ROOT_DIR, "logs")
 # You can download this file from the Releases page
 # https://github.com/matterport/Mask_RCNN/releases
 BALLON_WEIGHTS_PATH = "C:/Users/Phil/SU-ECE-19-7-master-MaskRCNN/Recognition/Mask_RCNN-master/logs/bottle20200221T0110"  # TODO: update this path
+###########################################################################################################################
+
 ########################### END IMPORTS ########################################
 
 # CLASS DEFINITION
@@ -168,10 +168,10 @@ def normalize_matrix(score_matrix):
     'Used to normalize the score matrix with respect to the highest value present'
 
     # get max score
-    #max_matrix = score_matrix.max()
+    max_matrix = score_matrix.max()
 
     # normalize
-    #score_matrix = score_matrix / max_matrix
+    score_matrix = score_matrix / max_matrix
 
     # add identity matrix
     score_matrix = score_matrix + np.identity(len(score_matrix[1]))
@@ -282,18 +282,16 @@ def match(primary_images, secondary_images, image_destination,
 
         # create mask from template and place over image to reduce ROI
         mask_1 = cv2.imread(primary_images[primary_count].template_title, -1) 
-        print("dimensions mask_1: ", len(mask_1), len(mask_1[0]))
-        print(mask_1)
-        cv2.imshow("create mask from template", mask_1)
+        #cv2.imshow("create mask from template", mask_1)
         mySift = cv2.xfeatures2d.SIFT_create()
         kp_1, desc_1 = mySift.detectAndCompute(primary_images[primary_count].image, mask_1)
 
-        # paramter setup and create nearest nieghbor matcher
+        # paramter setup and create nearest neighbor matcher
         index_params = dict(algorithm = 0, trees = 5)
         search_params = dict()
         flann = cv2.FlannBasedMatcher(index_params, search_params)
 
-        # Begin nested loopfor the images to be matched to. This secondary loop
+        # Begin nested loop for the images to be matched to. This secondary loop
         # will always iterate over the full dataset of images.
         for secondary_count in range(len(secondary_images)):
 
@@ -306,14 +304,14 @@ def match(primary_images, secondary_images, image_destination,
 
                  
                  # This section is for the presentation only, remove later
-                 temp1 = cv2.resize(rec_list[primary_count].image, (960, 540))
-                 temp2 = cv2.resize(rec_list[secondary_count].image, (960, 540))
+                 #temp1 = cv2.resize(rec_list[primary_count].image, (960, 540))
+                 #temp2 = cv2.resize(rec_list[secondary_count].image, (960, 540))
 
 
-                 horiz = np.hstack((temp1, temp2))
-                 cv2.imshow("matched image to template", horiz)
-                 cv2.waitKey(500)
-                 cv2.destroyAllWindows()
+                 #horiz = np.hstack((temp1, temp2))
+                 #cv2.imshow("matched image to template", horiz)
+                 #cv2.waitKey(500)
+                 #cv2.destroyAllWindows()
                  
                  # end 
 
@@ -419,9 +417,11 @@ def match_multi(primary_images, image_destination, n_threads, write_threshold, p
                             parameters))
         thread.start()
         thread_list.append(thread)
-
+        print("appending thread "+ str(i))
+        
     for thread in thread_list:
         thread.join()
+        print("joining thread")
 
     return score_matrix
 ################################################################################
@@ -521,7 +521,7 @@ def manual_roi(rec_list, image_source):
     return rec_list
 
 ################################################################################
-def add_templates(rec_list, template_source):
+def mrcnn_templates(rec_list, template_source):
     'Used for adding the premade templates to the recognition class if'
     'the user has them.'
     #MASK RCNN
@@ -578,18 +578,15 @@ def add_templates(rec_list, template_source):
     print("Loading weights ", weights_path)
     model.load_weights(weights_path, by_name=True)
 
-  
-
-    count = 0
-    #todo: do a check and make sure temp_templates folder isn't already created
     temp_templates = template_source.parents[1] / "mrcnn_templates/"
     if (not os.path.exists(temp_templates)):
         os.mkdir(temp_templates)
 
+    count = 0
+
     # add in template
     for t in glob.iglob(str(template_source)):
         
-
         IMAGE_DIR="C:/Users/Phil/SU-ECE-19-7-master-MaskRCNN/Image_Sets/quick_set/images"
         # Load a random image from the images folder
         file_names = next(os.walk(IMAGE_DIR))[2]
@@ -604,32 +601,73 @@ def add_templates(rec_list, template_source):
                                     dataset.class_names, r['scores'], ax=ax,
                                     title="Predictions")
         display_images(np.transpose(r['masks'], [2, 0, 1]), cmap="binary")
+       
+        ## TODO: Turn this into a user option of "Is there a cat in this photo?"
+        ##       or "Is there more than one cat in this photo?" then either let 
+        ##       the Mask R-CNN keep both masks or have the user draw a manual
+        ##       template for that image.
+        if (np.size(r['masks']) == 0):
+            print('\n\tNo cat detected by Mask R-CNN in image.')
+            print('\tMaking empty template for this image:',rec_list[count].image_title,'\n\n')
+            r_mask = np.zeros(np.shape(rec_list[count].image))
+        elif (np.shape(r['masks'])[2] > 1):
+            print('\tShape r[''masks'']:', np.shape(r['masks']))
+            print('\n\tMore than one cat detected by Mask R-CNN in image:',np.shape(r['masks'])[2],"cats.")
+            print('\tMaking empty template for this image:',rec_list[count].image_title,'\n\n')
+            r_mask = np.zeros(np.shape(rec_list[count].image))
+            #print('\tUsing 1st template generated for this image:',rec_list[count].image_title,'\n\n')
+            #r_masks = np.split(r['masks'],np.shape(r['masks'])[2])
+            #r_mask = np.reshape(r_masks[1], np.shape(r['masks'])[:2])
+        else:
+            r_mask = np.reshape(r['masks'], np.shape(r['masks'])[:2])
 
- 
-        template = cv2.imread(t)
-        r_mask = np.reshape(r['masks'], np.shape(r['masks'])[:2])
         r_mask = r_mask * 255
-        print("r_mask shape: ", np.shape(r_mask))
-        print(r_mask)
 
-        #rec_list[count].add_template(t, r_mask)
+        # get template name and write BMP from r_mask
+        template = cv2.imread(t)
         template_name = Path(t).with_suffix('.BMP')
-        print(template_name.name)
         template_path = temp_templates / template_name.name
-        print(template_path)
         cv2.imwrite(str(template_path), r_mask, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
+
+        # add template to corresponding rec_list object
         rec_list[count].add_template(str(template_path), r_mask)
 
-        print("dddddddddddd")
-        print(rec_list[count].image_title)
         # This section is for the presentation only, remove later
         #temp1 = cv2.resize(rec_list[count].image, (960,540))
-        #temp2 = cv2.resize(r_mask, (960,540))
+        #temp2 = cv2.resize(rec_list[count].template, (960,540))
 
         #horiz = np.hstack((temp1,temp2))
-        #cv2.imshow("mathced image to tempalte", horiz)
+        #cv2.imshow("matched image to template", horiz)
         #cv2.waitKey(0)
         #cv2.destroyAllWindows()
+        # end 
+
+        count = count + 1
+
+    return rec_list
+################################################################################
+def add_templates(rec_list, template_source):
+    'Used for adding the premade templates to the recognition class if'
+    'the user has them.'
+
+    count = 0
+    # add in template
+    for t in glob.iglob(str(template_source)):
+
+        IMAGE_DIR="C:/Users/Phil/SU-ECE-19-7-master-MaskRCNN/Image_Sets/quick_set/images"
+
+        template = cv2.imread(t)
+
+        rec_list[count].add_template(t, template)
+
+        # This section is for the presentation only, remove later
+        temp1 = cv2.resize(rec_list[count].image, (960,540))
+        temp2 = cv2.resize(rec_list[count].template, (960,540))
+
+        horiz = np.hstack((temp1,temp2))
+        cv2.imshow("mathced image to tempalte", horiz)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
         # end 
 
         count = count + 1
@@ -720,6 +758,9 @@ if __name__ == "__main__":
     if (int(parameters['config']['templating']) == 1):
         print('\n\tUsing premade templates...\n')
         rec_list = add_templates(rec_list, paths['templates'])
+    elif (int(parameters['config']['templating']) == 2):
+        print('\n\tUsing automated Mask R-CNN to generate templates...\n')
+        rec_list = mrcnn_templates(rec_list, paths['templates'])   
     else:
         print('\n\tUsing the manual templating function...\n')
         rec_list = manual_roi(rec_list, paths['images'])
