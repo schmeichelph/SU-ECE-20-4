@@ -1,0 +1,15 @@
+{
+  "config" : {
+    "n_threads": "8",
+    "write_threshold": "10",
+    "cluster_table": "1",
+    "ransac": "0"
+  },
+  "score_boosting" : {
+    "station_score": "1.5",
+    "camera_score": "2.0",
+    "date_score": "2.5",
+    "time_score": "3.0",
+    "time_delta": "20"
+  }
+}
