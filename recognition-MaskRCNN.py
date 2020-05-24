@@ -78,10 +78,10 @@ from samples.snow_leopard import snow_leopard
 # Directory to save logs and trained model
 MODEL_DIR = os.path.join(ROOT_DIR, "logs")
 
-# Path to Ballon trained weights
+# Path to Balloon trained weights
 # You can download this file from the Releases page
 # https://github.com/matterport/Mask_RCNN/releases
-BALLON_WEIGHTS_PATH = "C:/Users/Phil/SU-ECE-19-7-master-MaskRCNN/Recognition/Mask_RCNN-master/logs/bottle20200221T0110"  # TODO: update this path
+
 ###########################################################################################################################
 
 ########################### END IMPORTS ########################################
@@ -521,13 +521,13 @@ def manual_roi(rec_list, image_source):
     return rec_list
 
 ################################################################################
-def mrcnn_templates(rec_list, template_source):
-    'Used for adding the premade templates to the recognition class if'
-    'the user has them.'
-    #MASK RCNN
-    print(template_source, rec_list)
+def mrcnn_templates(rec_list, template_source, snowleop_dir, weights_path):
+    'Used for generating templates with the Mask R-CNN and adding'
+    'to the recognition class.'
+    # MASK R-CNN
     config = snow_leopard.CustomConfig()
-    BALLOON_DIR = os.path.join(ROOT_DIR, "C:/Users/Phil/SU-ECE-19-7-master-MaskRCNN/Recognition/samples/snow_leopard/dataset")
+    ## TODO: change this path or get it into easy_run.py
+    ##snowleop_dir = os.path.join(ROOT_DIR, "C:/Users/Phil/SU-ECE-19-7-master-MaskRCNN/Recognition/samples/snow_leopard/dataset")
     class InferenceConfig(config.__class__):
     # Run detection on one image at a time
         GPU_COUNT = 1
@@ -535,10 +535,8 @@ def mrcnn_templates(rec_list, template_source):
 
     config = InferenceConfig()
     config.display()
-    # Device to load the neural network on.
-    # Useful if you're training a model on the same 
-    # machine, in which case use CPU and leave the
-    # GPU for training.
+    # Device to load the neural network on. Useful if you're training a model on the same machine,
+    # in which case use CPU and leave the GPU for training.
     DEVICE = "/cpu:0"  # /cpu:0 or /gpu:0
     # Inspect the model in training or inference modes
     # values: 'inference' or 'training'
@@ -554,7 +552,7 @@ def mrcnn_templates(rec_list, template_source):
         return ax
     # Load validation dataset
     dataset = snow_leopard.CustomDataset()
-    dataset.load_custom(BALLOON_DIR, "val")
+    dataset.load_custom(snowleop_dir, "val")
 
     # Must call before using the dataset
     dataset.prepare()
@@ -567,16 +565,13 @@ def mrcnn_templates(rec_list, template_source):
    
     # Set path to balloon weights file
 
-    # Download file from the Releases page and set its path
+    # Optional: Download file from the Releases page and set its path
     # https://github.com/matterport/Mask_RCNN/releases
     # weights_path = "/path/to/mask_rcnn_balloon.h5"
 
-    # Or, load the last model you trained
-    weights_path = os.path.join(ROOT_DIR, "C:/Users/Phil/SU-ECE-19-7-master-MaskRCNN/Recognition/Mask_RCNN-master/logs/bottle20200221T0110/mask_rcnn_bottle_0010.h5")
-
     # Load weights
     print("Loading weights ", weights_path)
-    model.load_weights(weights_path, by_name=True)
+    model.load_weights(str(weights_path), by_name=True)
 
     temp_templates = template_source.parents[1] / "mrcnn_templates/"
     if (not os.path.exists(temp_templates)):
@@ -587,6 +582,7 @@ def mrcnn_templates(rec_list, template_source):
     # add in template
     for t in glob.iglob(str(template_source)):
         
+        ## TODO: edit this path
         IMAGE_DIR="C:/Users/Phil/SU-ECE-19-7-master-MaskRCNN/Image_Sets/quick_set/images"
         # Load a random image from the images folder
         file_names = next(os.walk(IMAGE_DIR))[2]
@@ -632,16 +628,6 @@ def mrcnn_templates(rec_list, template_source):
         # add template to corresponding rec_list object
         rec_list[count].add_template(str(template_path), r_mask)
 
-        # This section is for the presentation only, remove later
-        #temp1 = cv2.resize(rec_list[count].image, (960,540))
-        #temp2 = cv2.resize(rec_list[count].template, (960,540))
-
-        #horiz = np.hstack((temp1,temp2))
-        #cv2.imshow("matched image to template", horiz)
-        #cv2.waitKey(0)
-        #cv2.destroyAllWindows()
-        # end 
-
         count = count + 1
 
     return rec_list
@@ -653,8 +639,6 @@ def add_templates(rec_list, template_source):
     count = 0
     # add in template
     for t in glob.iglob(str(template_source)):
-
-        IMAGE_DIR="C:/Users/Phil/SU-ECE-19-7-master-MaskRCNN/Image_Sets/quick_set/images"
 
         template = cv2.imread(t)
 
@@ -733,17 +717,21 @@ if __name__ == "__main__":
     parser.add_argument("-destination", type = Path, required = False, default = Path.cwd())
     parser.add_argument("-num_threads", type = int, required = False, default = 1)
     parser.add_argument("-write_threshold", type = int, required = False, default = 60)
+    parser.add_argument("-validation_dataset", type = Path, required = False, default = None)
+    parser.add_argument("-weight_source", type = Path, required = False, default = None)
 
     args = vars(parser.parse_args())
 
     # initialize depending on input arguments
-    paths = {'images': '', 'templates': '', 'config': '', 'cluster': '', 'destination': ''}
+    paths = {'images': '', 'templates': '', 'config': '', 'cluster': '', 'destination': '', 'validation': '', 'weights': ''}
 
     paths['images'] = args['image_source']
     paths['templates'] = args['template_source']
     paths['config'] = args['config_source']
     paths['cluster'] = args['cluster_source']
     paths['destination'] = args['destination']
+    paths['validation_dataset'] = args['validation_dataset']
+    paths['weight_source'] = args['weight_source']
     n_threads = args['num_threads']
     write_threshold = args['write_threshold']
 
@@ -759,8 +747,11 @@ if __name__ == "__main__":
         print('\n\tUsing premade templates...\n')
         rec_list = add_templates(rec_list, paths['templates'])
     elif (int(parameters['config']['templating']) == 2):
-        print('\n\tUsing automated Mask R-CNN to generate templates...\n')
-        rec_list = mrcnn_templates(rec_list, paths['templates'])   
+        print("\n\tstarting Mask R-CNN templating process...\n")
+        start = time.time()
+        rec_list = mrcnn_templates(rec_list, paths['templates'], paths['validation_dataset'], paths['weight_source'])   
+        end = time.time()
+        print("\tTime took to run Mask R-CNN: " + str((end - start)))
     else:
         print('\n\tUsing the manual templating function...\n')
         rec_list = manual_roi(rec_list, paths['images'])
@@ -777,7 +768,7 @@ if __name__ == "__main__":
     start = time.time()
     score_matrix = match_multi(rec_list, paths['destination'], n_threads, write_threshold, parameters)
     end = time.time()
-    print("\tTime took to run: " + str((end - start)))
+    print("\tTime took to match: " + str((end - start)))
 
     # Normalize scores in matrix
     score_matrix = normalize_matrix(score_matrix)
