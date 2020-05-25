@@ -50,9 +50,14 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 from PIL import Image
+from sklearn.cluster import KMeans
+from sklearn import metrics
+from scipy.spatial.distance import cdist
+from sklearn.metrics import silhouette_samples, silhouette_score
 import markov_clustering as mc
 import networkx as nx
 import math
+import csv
 
 global mark_array
 ########################### END IMPORTS ########################################
@@ -94,6 +99,167 @@ class Recognition:
 ########################### END CLASS DEFINITION ###############################
 
 # FUNCTION DEFINITIONS (In Reverse Order of Call)
+
+##inputs should be score_matrix, k_range
+def kmeans_score_matrix(score_matrixCSV):
+
+    # score matrix file path
+    filename = score_matrixCSV
+
+    # initializing the titles and rows list 
+    fields = [] 
+    rows = [] 
+    cluster_arr = []
+    rowsCount = 0
+    # reading csv file 
+    with open(filename, 'r') as csvfile: 
+        # creating a csv reader object 
+        csvreader = csv.reader(csvfile) 
+        
+        # extracting field names through first row 
+        fields = next(csvreader)
+        rowsCount = 1 
+        for k in fields:
+            cluster_arr.append(k)
+    
+        # extracting each data row one by one 
+        for row in csvreader: 
+            rows.append(row) 
+            rowsCount += 1
+    
+        
+    for i in rows:
+        for j in i:
+            cluster_arr.append(j)
+
+    print(len(cluster_arr))
+
+    #preprocess array for clustering input
+    divided_arr = np.array_split(cluster_arr, csvreader.line_num)
+    clustering_in = np.vstack(divided_arr)
+    clustering_in = np.float32(clustering_in)
+
+    colors = ['b', 'g', 'r']
+    markers = ['o', 'v', 's']
+    distortion = []
+    clusterCount = 0
+
+    #range for number of clusters 
+    K = range(1,10)
+
+    #clustering descriptors and using the elbow method to determine k
+    for k in K:
+        try:
+            kmeanModel = KMeans(n_clusters=k).fit(clustering_in)
+            kmeanModel.fit(clustering_in)
+            distortion.append(sum(np.min(cdist(clustering_in, kmeanModel.cluster_centers_, 'euclidean'), axis=1)) / clustering_in.shape[0])
+            clusterCount = clusterCount + 1
+        except:
+            pass
+
+
+    K = range(1, clusterCount+1)
+    plt.plot(K, distortion, 'bx-')
+    plt.xlabel('k')
+    plt.ylabel('Distortion')
+    plt.title('The Elbow Method showing the optimal k (Score Matrix)')
+    plt.show()
+
+
+    print('\n')
+    print("done clustering\n")
+
+def kmeans_clustering(descriptors_list, k_range): 
+
+    print("Starting clustering....\n")
+
+    max_decrease_index = 0
+    max_decrease = 0.0
+
+    #preprocess array of descriptors for clustering input
+    new_arr = np.asarray(descriptors_list)
+    print(len(new_arr))
+    divided_array = np.array_split(new_arr, 128)
+    clustering_input = np.vstack(divided_array)
+    clustering_input = np.float32(clustering_input)
+
+    colors = ['b', 'g', 'r']
+    markers = ['o', 'v', 's']
+    distortions = []
+
+    #range for number of clusters 
+    K = range(1,k_range)
+
+    #clustering descriptors and using the elbow method to determine k
+    for k in K:
+        kmeanModel = KMeans(n_clusters=k).fit(clustering_input)
+        kmeanModel.fit(clustering_input)
+        distortions.append(sum(np.min(cdist(clustering_input, kmeanModel.cluster_centers_, 'euclidean'), axis=1)) / clustering_input.shape[0])
+
+    print("Preparing plot...")
+
+    # Plot the elbow
+    plt.plot(K, distortions, 'bx-')
+    plt.xlabel('k')
+    plt.ylabel('Distortion')
+    plt.title('The Elbow Method showing the optimal k (descriptors)')
+    plt.show()
+
+    print('\n')
+    print("done clustering\n")
+
+
+def test_accuracy(rec_list, score_matrix, threshold):
+
+    # True positive: number of times a match was correctly classified as a match
+    TP = 0 
+    # False negative: number of times a correct match was dismissed as not a match
+    FN = 0 
+    # False positive:  number of times two image were incorrectly matched
+    FP = 0 
+    # True negative: the number of matches that were corectly dismissed as not matches
+    TN = 0 
+
+    # traverse rows
+    for row in range(score_matrix.shape[0]):
+        primary_cat = rec_list[row].cat_ID
+        primary_title = rec_list[row].image_title
+
+        # traverse columns
+        for column in range(score_matrix.shape[1]):
+            # leave out the diagonal 
+            if (row != column):
+                secondary_cat = rec_list[column].cat_ID
+
+                if (score_matrix[row][column] > threshold and primary_cat == secondary_cat):
+                    TP = TP + 1
+                elif (score_matrix[row][column] <= threshold and primary_cat == secondary_cat):
+                    FN = FN + 1
+                elif (score_matrix[row][column] > threshold and primary_cat != secondary_cat):
+                    FP = FP + 1
+                else:
+                    TN = TN + 1
+
+
+    accuracy = ((TP+FP) / (TP+FP+TN+FN)) * 100
+    recall = (TP) / (TP+FN)
+    specificity = (TN) / (TN+FP)
+    precision = (TP) / (TP+FP)
+
+
+    print("\n\n")
+    print("Hits:",TP)
+    print("Misses:", FN)
+    print("Missclassifications:", FP)
+    print("\n")
+    print("Accuracy:", accuracy)
+    print("Recall/Sensitivity:", recall)
+    print("Specificity:", specificity)
+    print("Precision:", precision)
+
+
+################################################################################
+
 ################################################################################
 def check_matrix(rec_list, score_matrix):
 
@@ -154,7 +320,7 @@ def markov_cluster(mark_array):
     #     print("Inflation: ", inflation, "modularity: ", q)
     
     mc.draw_graph(mark_array, clusters, node_size=50, with_labels=True, edge_color="silver")   
-    print("Successful write")
+    print("Successful MCL")
 
 ################################################################################
 def normailze_matrix(score_matrix):
@@ -327,7 +493,7 @@ def blue(intensity):
     return io
 
 
-def filter_images(primary_image,image_source):
+def filter_images(primary_image,image_source,edited_source):
   
     img_yuv = cv2.cvtColor(primary_image, cv2.COLOR_BGR2YUV)
     y, u, v = cv2.split(img_yuv)
@@ -371,12 +537,19 @@ def filter_images(primary_image,image_source):
             # save_image = normal_img
             # save_image.save(image_source, "JPEG")
             #normal_img.save(image_source, "JPEG")
-            sharp_image = edge_sharpening(primary_image)
+
+            save_image = np.copy(primary_image)
+            image_path = image_source
+            image_path = image_path.split("/")
+
+            num = image_path.index('images')
+            # Writing original image to folder and editing copy
+            edited_source = edited_source + "/" + image_path[num+1]
+            cv2.imwrite(edited_source,primary_image)
+            
+            sharp_image = edge_sharpening(save_image)
             hist_image = histogram_equalization(sharp_image)
-            save_image = np.copy(hist_image)
-            #cv2.imshow("sharp", hist_image)
-            #cv2.waitKey()
-            cv2.imwrite(image_source,save_image)
+            cv2.imwrite(image_source,hist_image)
             
             #sharp_image = edge_sharpening(normal_img)
             
@@ -500,10 +673,9 @@ def match(primary_images, secondary_images, image_destination,
     resize_amt = math.floor(math.sqrt(x*y))
     new_array = np.resize(final_array,(resize_amt,resize_amt))
     call_cluster(new_array)
-
+    
+    # Markov clustering with one filled array to square matrix
     mark_array = np.hstack((final_array, one_array))
-    print("mark array size: ", mark_array.shape)
-
     #markov_cluster(mark_array)
     
     return score_matrix
@@ -746,7 +918,7 @@ def init_Recognition(image_source, template_source):
         rec_list[count].add_image(i, image)
         #rec_list[count].add_template(rec_list, template_source)
 
-        filter_images(image,i)
+        filter_images(image,i,str(paths['edited_photos']))
 
         # get title characteristics
         station, camera, date, time = getTitleChars(i)
@@ -779,17 +951,20 @@ if __name__ == "__main__":
     parser.add_argument("-destination", type = Path, required = False, default = Path.cwd())
     parser.add_argument("-num_threads", type = int, required = False, default = 1)
     parser.add_argument("-write_threshold", type = int, required = False, default = 60)
-
+    parser.add_argument("-score_matrixCSV", type = Path, required = False, default = None)
+    parser.add_argument("-edited_photos", type = Path, required = False, default = None)
     args = vars(parser.parse_args())
 
     # initialize depending on input arguments
-    paths = {'images': '', 'templates': '', 'config': '', 'cluster': '', 'destination': ''}
+    paths = {'images': '', 'templates': '', 'config': '', 'cluster': '', 'destination': '','score_matrixCSV': '', 'edited_photos': ''}
 
     paths['images'] = args['image_source']
     paths['templates'] = args['template_source']
     paths['config'] = args['config_source']
     paths['cluster'] = args['cluster_source']
     paths['destination'] = args['destination']
+    paths['score_matrixCSV'] = args['score_matrixCSV']
+    paths['edited_photos'] = args['edited_photos']
     n_threads = args['num_threads']
     write_threshold = args['write_threshold']
 
@@ -815,14 +990,15 @@ if __name__ == "__main__":
         print("\n\tLoading information from cluster table...\n")
         # add in the cat ID data if available
         rec_list = add_cat_ID(rec_list, paths['cluster'])
+        
+    lock = threading.Lock()
     
     
     # START
     print("\tstarting matching process...\n")
     start = time.time()
     score_matrix = match_multi(rec_list, paths['destination'], n_threads, write_threshold, parameters)
-    end = time.time()
-    print("\tTime took to run: " + str((end - start)))
+
 
     # Normalize scores in matrix
     score_matrix = normailze_matrix(score_matrix)
@@ -836,6 +1012,11 @@ if __name__ == "__main__":
     if (paths['cluster'] != None):
         print("Checking matrix...")
         check_matrix(rec_list, score_matrix)
+    
+    kmeans_score_matrix(paths['score_matrixCSV'])
+    
+    end = time.time()
+    print("\tTime took to run: " + str((end - start)))
 
     print('\n\tDone.\n')
     
