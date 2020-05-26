@@ -59,6 +59,34 @@ import networkx as nx
 import math
 import csv
 
+#mask r-cnn
+import random
+import tensorflow as tf
+import matplotlib
+#import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+import skimage.io
+
+# EDIT PATHS FOR MASK R-CNN LIBRARY FOLDER ################################################################################
+# Root directory of the project
+ROOT_DIR = os.path.abspath("../..")
+#print(ROOT_DIR)
+#ROOT_DIR = "Mask_RCNN-master"
+
+# Import Mask RCNN
+sys.path.append(ROOT_DIR)  # To find local version of the library
+from mrcnn import utils
+from mrcnn import visualize
+from mrcnn.visualize import display_images
+import mrcnn.model as modellib
+from mrcnn.model import log
+
+from samples.snow_leopard import snow_leopard
+
+#%matplotlib inline 
+# Directory to save logs and trained model
+MODEL_DIR = os.path.join(ROOT_DIR, "logs")
+
 global mark_array
 ########################### END IMPORTS ########################################
 
@@ -577,23 +605,39 @@ def match(primary_images, secondary_images, image_destination,
     # Begin loop on the primary imags to match. Due to multithreading of the
     # program this may not be the full set of images.
     descriptors = []
+    descriptors_MCL = []
+    distances = []
+    clustering_counter = 0
+    primary_counter = 0
+    count = 0
+    
     for primary_count in range(len(primary_images)):
+        primary_counter = primary_counter + 1
+        num_desc = 0
+        countDesctoPrimary = 0
+        new_arr = 0
+        new_arr = np.asarray(new_arr)
 
         print("\t\tMatching: " + os.path.basename(primary_images[primary_count].image_title) + "\n")
         # create mask from template and place over image to reduce ROI
         mask_1 = cv2.imread(primary_images[primary_count].template_title, -1) 
         mySift = cv2.xfeatures2d.SIFT_create()
         kp_1, desc_1 = mySift.detectAndCompute(primary_images[primary_count].image, mask_1)
-
+        
+        for i in desc_1:
+            descriptors.append(i)
 
         # paramter setup and create nearest nieghbor matcher
         index_params = dict(algorithm = 0, trees = 5)
         search_params = dict()
         flann = cv2.FlannBasedMatcher(index_params, search_params)
+        
+        count = count + 1
 
         # Begin nested loopfor the images to be matched to. This secondary loop
         # will always iterate over the full dataset of images.
         for secondary_count in range(len(secondary_images)):
+            countDesctoPrimary = countDesctoPrimary + 1
 
             # check if same image; if not, go into sophisticated matching
             if primary_images[primary_count].image_title != secondary_images[secondary_count].image_title:
@@ -614,7 +658,7 @@ def match(primary_images, secondary_images, image_destination,
                      for m, n in matches:
                          if m.distance < 0.7 * n.distance:
                              good_points.append(m)
-                             descriptors.append(desc_1[primary_count])
+                             descriptors_MCL.append(desc_1[primary_count])
 
                      
                      # RANSAC
@@ -663,7 +707,7 @@ def match(primary_images, secondary_images, image_destination,
     
 
 
-    final_array = np.asarray(descriptors)
+    final_array = np.asarray(descriptors_MCL)
 
     x,y = final_array.shape
     size = x-y
@@ -825,6 +869,119 @@ def manual_roi(rec_list, image_source):
         count = count + 1
 
     return rec_list
+################################################################################
+
+def mrcnn_templates(rec_list, template_source, snowleop_dir, weights_path):
+    'Used for generating templates with the Mask R-CNN and adding'
+    'to the recognition class.'
+    # MASK R-CNN
+    config = snow_leopard.CustomConfig()
+    ## TODO: change this path or get it into easy_run.py
+    ##snowleop_dir = os.path.join(ROOT_DIR, "C:/Users/Phil/SU-ECE-19-7-master-MaskRCNN/Recognition/samples/snow_leopard/dataset")
+    class InferenceConfig(config.__class__):
+    # Run detection on one image at a time
+        GPU_COUNT = 1
+        IMAGES_PER_GPU = 1
+
+    config = InferenceConfig()
+    config.display()
+    # Device to load the neural network on. Useful if you're training a model on the same machine,
+    # in which case use CPU and leave the GPU for training.
+    DEVICE = "/cpu:0"  # /cpu:0 or /gpu:0
+    # Inspect the model in training or inference modes
+    # values: 'inference' or 'training'
+    TEST_MODE = "inference"
+    def get_ax(rows=1, cols=1, size=16):
+        """Return a Matplotlib Axes array to be used in
+        all visualizations in the notebook. Provide a
+        central point to control graph sizes.
+        
+        Adjust the size attribute to control how big to render images
+        """
+        _, ax = plt.subplots(rows, cols, figsize=(size*cols, size*rows))
+        return ax
+    # Load validation dataset
+    dataset = snow_leopard.CustomDataset()
+    dataset.load_custom(snowleop_dir, "val")
+
+    # Must call before using the dataset
+    dataset.prepare()
+
+    print("Images: {}\nClasses: {}".format(len(dataset.image_ids), dataset.class_names))
+
+    # Create model in inference mode
+    with tf.device(DEVICE):
+        model = modellib.MaskRCNN(mode="inference", model_dir=MODEL_DIR, config=config)
+   
+    # Set path to balloon weights file
+
+    # Optional: Download file from the Releases page and set its path
+    # https://github.com/matterport/Mask_RCNN/releases
+    # weights_path = "/path/to/mask_rcnn_balloon.h5"
+
+    # Load weights
+    print("Loading weights ", weights_path)
+    model.load_weights(str(weights_path), by_name=True)
+
+    temp_templates = template_source.parents[1] / "mrcnn_templates/"
+    if (not os.path.exists(temp_templates)):
+        os.mkdir(temp_templates)
+
+    count = 0
+
+    # add in template
+    for t in glob.iglob(str(template_source)):
+        
+        ## TODO: edit this path
+        IMAGE_DIR="/Users/tonycaballero/Downloads/SU-ECE-20-4-master/Image_Sets/quick_set/images"
+        # Load a random image from the images folder
+        file_names = next(os.walk(IMAGE_DIR))[2]
+        maskimage = skimage.io.imread(rec_list[count].image_title)
+        # Run detection
+        results = model.detect([maskimage], verbose=1)
+
+        # Visualize results
+        r = results[0]
+        ax = get_ax(1)
+        bbb=visualize.display_instances(maskimage, r['rois'], r['masks'], r['class_ids'], 
+                                    dataset.class_names, r['scores'], ax=ax,
+                                    title="Predictions")
+        display_images(np.transpose(r['masks'], [2, 0, 1]), cmap="binary")
+       
+        ## TODO: Turn this into a user option of "Is there a cat in this photo?"
+        ##       or "Is there more than one cat in this photo?" then either let 
+        ##       the Mask R-CNN keep both masks or have the user draw a manual
+        ##       template for that image.
+        if (np.size(r['masks']) == 0):
+            print('\n\tNo cat detected by Mask R-CNN in image.')
+            print('\tMaking empty template for this image:',rec_list[count].image_title,'\n\n')
+            r_mask = np.zeros(np.shape(rec_list[count].image))
+        elif (np.shape(r['masks'])[2] > 1):
+            print('\tShape r[''masks'']:', np.shape(r['masks']))
+            print('\n\tMore than one cat detected by Mask R-CNN in image:',np.shape(r['masks'])[2],"cats.")
+            print('\tMaking empty template for this image:',rec_list[count].image_title,'\n\n')
+            r_mask = np.zeros(np.shape(rec_list[count].image))
+            #print('\tUsing 1st template generated for this image:',rec_list[count].image_title,'\n\n')
+            #r_masks = np.split(r['masks'],np.shape(r['masks'])[2])
+            #r_mask = np.reshape(r_masks[1], np.shape(r['masks'])[:2])
+        else:
+            r_mask = np.reshape(r['masks'], np.shape(r['masks'])[:2])
+
+        r_mask = r_mask * 255
+
+        # get template name and write BMP from r_mask
+        template = cv2.imread(t)
+        template_name = Path(t).with_suffix('.BMP')
+        template_path = temp_templates / template_name.name
+        cv2.imwrite(str(template_path), r_mask, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
+
+        # add template to corresponding rec_list object
+        rec_list[count].add_template(str(template_path), r_mask)
+
+        count = count + 1
+
+    return rec_list
+
 
 ################################################################################
 def add_templates(rec_list, template_source):
@@ -951,6 +1108,8 @@ if __name__ == "__main__":
     parser.add_argument("-destination", type = Path, required = False, default = Path.cwd())
     parser.add_argument("-num_threads", type = int, required = False, default = 1)
     parser.add_argument("-write_threshold", type = int, required = False, default = 60)
+    parser.add_argument("-validation_dataset", type = Path, required = False, default = None)
+    parser.add_argument("-weight_source", type = Path, required = False, default = None)
     parser.add_argument("-score_matrixCSV", type = Path, required = False, default = None)
     parser.add_argument("-edited_photos", type = Path, required = False, default = None)
     args = vars(parser.parse_args())
@@ -963,6 +1122,8 @@ if __name__ == "__main__":
     paths['config'] = args['config_source']
     paths['cluster'] = args['cluster_source']
     paths['destination'] = args['destination']
+    paths['validation_dataset'] = args['validation_dataset']
+    paths['weight_source'] = args['weight_source']
     paths['score_matrixCSV'] = args['score_matrixCSV']
     paths['edited_photos'] = args['edited_photos']
     n_threads = args['num_threads']
@@ -981,6 +1142,12 @@ if __name__ == "__main__":
     if (int(parameters['config']['templating']) == 1):
         print('\n\tUsing premade templates...\n')
         rec_list = add_templates(rec_list, paths['templates'])
+    elif (int(parameters['config']['templating']) == 2):
+        print("\n\tstarting Mask R-CNN templating process...\n")
+        start_one = time.time()
+        rec_list = mrcnn_templates(rec_list, paths['templates'], paths['validation_dataset'],paths['weight_source'])
+        end_one = time.time()
+        print("\tTime took to run Mask R-CNN: " + str((end_one - start_one)))
     else:
         print('\n\tUsing the manual templating function...\n')
         rec_list = manual_roi(rec_list, paths['images'])
@@ -1016,6 +1183,7 @@ if __name__ == "__main__":
     kmeans_score_matrix(paths['score_matrixCSV'])
     
     end = time.time()
+    
     print("\tTime took to run: " + str((end - start)))
 
     print('\n\tDone.\n')
