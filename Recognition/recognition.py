@@ -871,7 +871,7 @@ def manual_roi(rec_list, image_source):
     return rec_list
 ################################################################################
 
-def mrcnn_templates(rec_list, template_source, snowleop_dir, weights_path):
+def mrcnn_templates(rec_list, image_source, snowleop_dir, weights_path):
     'Used for generating templates with the Mask R-CNN and adding'
     'to the recognition class.'
     # MASK R-CNN
@@ -923,14 +923,14 @@ def mrcnn_templates(rec_list, template_source, snowleop_dir, weights_path):
     print("Loading weights ", weights_path)
     model.load_weights(str(weights_path), by_name=True)
 
-    temp_templates = template_source.parents[1] / "mrcnn_templates/"
+    temp_templates = image_source.parents[1] / "mrcnn_templates/"
     if (not os.path.exists(temp_templates)):
         os.mkdir(temp_templates)
 
     count = 0
 
     # add in template
-    for t in glob.iglob(str(template_source)):
+    for t in glob.iglob(str(image_source)):
         
         ## TODO: edit this path
         IMAGE_DIR="/Users/tonycaballero/Downloads/SU-ECE-20-4-master/Image_Sets/quick_set/images"
@@ -1145,7 +1145,7 @@ if __name__ == "__main__":
     elif (int(parameters['config']['templating']) == 2):
         print("\n\tstarting Mask R-CNN templating process...\n")
         start_one = time.time()
-        rec_list = mrcnn_templates(rec_list, paths['templates'], paths['validation_dataset'],paths['weight_source'])
+        rec_list = mrcnn_templates(rec_list, paths['images'], paths['validation_dataset'],paths['weight_source'])
         end_one = time.time()
         print("\tTime took to run Mask R-CNN: " + str((end_one - start_one)))
     else:
