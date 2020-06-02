@@ -86,3 +86,18 @@ python easy_run.py
 
 ## TODOs
 
+#### Multiple Templates
+Currently, if the Mask R-CNN detects an image that has two leopards, or it generats two different templates, than the output will only a blank black template. This is because Recognition.py isn't set up to handle the matching of two snow leopards in one image. This is one change that will need to occur.
+
+#### Image Enhancement and Mask R-CNN
+Mask R-CNN and the image enhancement cannot be run at the same time because of the changes that occur to the image. There 
+is a dimension error that Mask R-CNN cannot match. A solution could be to move the image enhancement elsewhere in the code, or find a way to convert the dimensions of the enhanced image so that it will be accepted by Mask R-CNN.
+
+#### Clustering Tests and Feature Extraction
+The clustering algorithms need further testing to determine the accuracy that they currently have. One method to make
+the algorithms more accurate while clustering SIFT descriptors is to use a Bag of Words method. Using this type of feature
+extraction could make the clustering algorithms more accurate. 
+
+#### Azure Databricks
+Implement multiprocessing into the Databricks version of Recognition.py to decrease the runtime of the program. After this
+is complete, fully integrate Recognition.py into Databricks to be able to run larger datasets. 
