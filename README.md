@@ -18,6 +18,21 @@ The folder "Recognition" contains both easy_run.py as well as Recognition.py. Al
 a user guide for how to set up and run Recognition.py
 
 ## Setup
+Certain software needs to be installed in order to be able to run Recognition.py. Changes also need to be made
+in Recognition.py to write to the correct folder, or depending on the operating system. 
+
+OpenCV version:
+  If you are running python 2, install OpenCV with "pip install opencv-contrib-python==3.3.1.11"
+
+  If you are running python 3, install OpenCV with "pip install opencv-contrib-python==3.4.2.16"
+
+Tensorflow needs to be installed on your system as well and can be downloaded at this website: 
+[Tensorflow](https://www.tensorflow.org/install)
+
+In order to install the correct software for markov clustering onto the system use the command:
+  "pip install markov_clustering"
+
+Specific paths must be changed 
 
 ## Usage
 
