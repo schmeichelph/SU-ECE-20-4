@@ -6,7 +6,7 @@ This will include a user guide for both the local version of Recognition.py as w
 
 ## Contents
 
-The folder "Azure_Recognition_notebook" contains a user guide for the Azure Datbricks
+The folder "Databricks_Spark_notebook" contains a user guide for the Azure Datbricks
 version of Recognition.py. The Azure Databricks version is available in both ".py" and ".ipynb" if you are running
 python notbook software.
 
@@ -42,8 +42,17 @@ In order to install the correct software for markov clustering onto the system u
   pip install markov_clustering"
   ```
 ### Line Changes
-Specific paths must be changed depending on the operating system:
+Specific paths must be changed depending on the operating system
 If running recognition on Windows, line 72 needs to be commented out, and line 74 needs to be uncommented.
+![](https://github.com/caballe4/SU-ECE-20-4/blob/master/Images_For_README/Screen%20Shot%202020-06-01%20at%208.30.17%20PM.png)
+
+
+In line 945, the image path needs to be updated to the current image directory path.
+![](https://github.com/caballe4/SU-ECE-20-4/blob/master/Images_For_README/Screen%20Shot%202020-06-01%20at%208.33.29%20PM.png)
+
+In line 1087, after the editing of the images takes place, the format that it is in, isn't recognized by the
+Mask R-CNN template generator. Therefore, comment out 1087 if you would like to run with Mask R-CNN. 
+![](https://github.com/caballe4/SU-ECE-20-4/blob/master/Images_For_README/Screen%20Shot%202020-06-01%20at%208.33.56%20PM.png)
 
 ## Usage
 
