@@ -69,9 +69,9 @@ import skimage.io
 
 # EDIT PATHS FOR MASK R-CNN LIBRARY FOLDER ################################################################################
 # Root directory of the project
-ROOT_DIR = os.path.abspath("../..")
+#ROOT_DIR = os.path.abspath("../..")
 #print(ROOT_DIR)
-#ROOT_DIR = "Mask_RCNN-master"
+ROOT_DIR = "Mask_RCNN-master"
 
 # Import Mask RCNN
 sys.path.append(ROOT_DIR)  # To find local version of the library
@@ -347,24 +347,27 @@ def markov_cluster(mark_array):
     #     q = mc.modularity(mark_array=result, clusters=clusters)
     #     print("Inflation: ", inflation, "modularity: ", q)
     
-    mc.draw_graph(mark_array, clusters, node_size=50, with_labels=True, edge_color="silver")   
+    #mc.draw_graph(mark_array, clusters, node_size=50, with_labels=True, edge_color="silver")   
     print("Successful MCL")
 
 ################################################################################
 def normailze_matrix(score_matrix):
     'Used to normalize the score matrix with respect to the highest value present'
 
+    # save score matrix with number of keypoint matches for Markov
+    score_matrix_copy = score_matrix
+
     # get max score
-    #max_matrix = score_matrix.max()
+    max_matrix = score_matrix.max()
 
     # normalize
-    #score_matrix = score_matrix / max_matrix
+    score_matrix = score_matrix / max_matrix
 
     # add identity matrix
-    #score_matrix = score_matrix + np.identity(len(score_matrix[1]))
+    score_matrix = score_matrix + np.identity(len(score_matrix[1]))
     
     # sending score matrix with true values to MCL
-    markov_cluster(score_matrix)
+    markov_cluster(score_matrix_copy)
 
     return score_matrix
 
@@ -568,11 +571,11 @@ def filter_images(primary_image,image_source,edited_source):
 
             save_image = np.copy(primary_image)
             image_path = image_source
-            image_path = image_path.split("/")
+            image_path = image_path.split("\\")
 
             num = image_path.index('images')
             # Writing original image to folder and editing copy
-            edited_source = edited_source + "/" + image_path[num+1]
+            edited_source = edited_source + "\\" + image_path[num+1]
             cv2.imwrite(edited_source,primary_image)
             
             sharp_image = edge_sharpening(save_image)
@@ -583,7 +586,7 @@ def filter_images(primary_image,image_source,edited_source):
             
             # cv2.imshow("final image", np.asarray(hist_image))
             # cv2.waitKey(0)
-            # break
+            break
         i += 1
     
 ################################################################################
@@ -1019,8 +1022,8 @@ def add_templates(rec_list, template_source):
             temp = temp[0]
             temp1 = temp1[0]
             
-            temp = temp.split("/")
-            temp1 = temp1.split("/")
+            temp = temp.split("\\")
+            temp1 = temp1.split("\\")
             
             num = temp.index("templates")
             num1 = temp1.index("images")
