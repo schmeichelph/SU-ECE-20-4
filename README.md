@@ -71,7 +71,7 @@ If running recognition on Windows, line 72 needs to be commented out, and line 7
 
 In line 945, the image path needs to be updated to the current image directory path.
 
-<img src="https://github.com/caballe4/SU-ECE-20-4/blob/master/Images_For_README/Screen%20Shot%202020-06-01%20at%208.33.29%20PM.png" width=600/>
+<img src="https://github.com/caballe4/SU-ECE-20-4/blob/master/Images_For_README/Screen%20Shot%202020-06-01%20at%208.33.29%20PM.png" height=50 width=725/>
 
 In line 1087, after the editing of the images takes place, the format that it is in, isn't recognized by the
 Mask R-CNN template generator. Therefore, comment out 1087 if you would like to run with Mask R-CNN. 
