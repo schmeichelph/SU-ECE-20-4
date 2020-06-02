@@ -83,6 +83,23 @@ Once all this has been complete, Recognition.py can be run in a MacOS terminal o
 ```bash
 python easy_run.py
 ```
+#### Mask R-CNN Notes
+1) Clone the Repository
+2) Download the DropBox File
+3) Find the folder in which requirements.txt is and Use this command in your terminal/Command Prompt pip3 install -r requirements.txt 
+5) Change easy_run to the proper folders
+
+mrcnn_templates is where the Mask RCNN runs in Recognition
+inspect_snow_leopard_model.ipynb explains the different parts of the Mask R-CNN at work 
+The Snow_leopard Class is in snow_leopard.py and gives the details to the class that we created. 
+The first command in this file is used for training. Give the weights you want to train on and the folder of the training set. 
+ We used https://www.robots.ox.ac.uk/~vgg/software/via/via.html
+VGG Image Annotator - University of Oxford
+VGG Image Annotator (VIA) is an image annotation tool that can be used to define regions in an image and create textual descriptions of those regions. VIA is an open source project developed at the Visual Geometry Group and released under the BSD-2 clause license. Here is a list of some salient features of VIA:
+www.robots.ox.ac.uk
+ to annotate the images to get the lines around the snow leopard.
+Pay close attention to the paths, path functions, root directories
+
 
 ## TODOs
 
