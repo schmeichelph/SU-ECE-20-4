@@ -21,18 +21,29 @@ a user guide for how to set up and run Recognition.py
 Certain software needs to be installed in order to be able to run Recognition.py. Changes also need to be made
 in Recognition.py to write to the correct folder, or depending on the operating system. 
 
-OpenCV version:
-  If you are running python 2, install OpenCV with "pip install opencv-contrib-python==3.3.1.11"
+### OpenCV:
+  If you are running python 2, install OpenCV with 
+  ```bash
+  pip install opencv-contrib-python==3.3.1.11
+  ```
 
-  If you are running python 3, install OpenCV with "pip install opencv-contrib-python==3.4.2.16"
+  If you are running python 3, install OpenCV with 
+  ```bash
+  pip install opencv-contrib-python==3.4.2.16
+  ```
 
+### Tensorflow 
 Tensorflow needs to be installed on your system as well and can be downloaded at this website: 
 [Tensorflow](https://www.tensorflow.org/install)
 
+### Markov Clustering
 In order to install the correct software for markov clustering onto the system use the command:
-  "pip install markov_clustering"
-
-Specific paths must be changed 
+  ```bash
+  pip install markov_clustering"
+  ```
+### Line Changes
+Specific paths must be changed depending on the operating system:
+If running recognition on Windows, line 72 needs to be commented out, and line 74 needs to be uncommented.
 
 ## Usage
 
