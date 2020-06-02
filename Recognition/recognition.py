@@ -875,6 +875,15 @@ def mrcnn_templates(rec_list, image_source, snowleop_dir, weights_path):
     'Used for generating templates with the Mask R-CNN and adding'
     'to the recognition class.'
     # MASK R-CNN
+    #------------------------------------------------------------------------------
+    # This is the Mask R-CNN Function. It takes in the rec_list, the list of recognition objects,
+    # the image source or the folder where the images you want to add masks are located, the snow leopard 
+    # The snowleop_dir which is the directory of the snow leopard photos that have been trained on, and the weight path
+    # which is where the weight (the bottle....h5 file) is located. The snowleop directory is needed because the weight
+    # is trained on that dataset. There are more comments underneath here. Up until the for loop is being called, the 
+    # Mask RCNN is still being configured. If there are more than 1 snow leopard templated then after the first one,
+    # the rest will turn into blank 0's. Make sure you Edit all the paths to reflect your directory or else it will not work.
+    #-------------------------------------------------------------------------------
     config = snow_leopard.CustomConfig()
     ## TODO: change this path or get it into easy_run.py
     ##snowleop_dir = os.path.join(ROOT_DIR, "C:/Users/Phil/SU-ECE-19-7-master-MaskRCNN/Recognition/samples/snow_leopard/dataset")
