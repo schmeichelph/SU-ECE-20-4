@@ -49,34 +49,34 @@ One config.json files belongs to each individual image set. Here is where change
 that Recognition.py uses. A in templating will call for a manual ROI to be inserted. A 1 will use the automatic templates
 that were generated and uploaded by Matlab, and a 2 will use the Mask R-CNN templates generated during runtime. 
 
-![config.json](https://github.com/caballe4/SU-ECE-20-4/blob/master/Images_For_README/Screen%20Shot%202020-06-01%20at%2011.18.22%20AM.png)
+<img src="https://github.com/caballe4/SU-ECE-20-4/blob/master/Images_For_README/Screen%20Shot%202020-06-01%20at%2011.18.22%20AM.png" height=425 width=600/>
 
 #### easy_run.py
 The template that will can be seen below needs to be filled out with the correct path. Replacing the tilde (~) with the
 path will allow Recognition.py to read these correctly and run properly. Without the correct path, Recognition.py will
 not run properly. 
 
-![easy_run.py tempalte](https://github.com/caballe4/SU-ECE-20-4/blob/master/Images_For_README/Screen%20Shot%202020-06-01%20at%202.55.57%20PM.png)
+<img src="https://github.com/caballe4/SU-ECE-20-4/blob/master/Images_For_README/Screen%20Shot%202020-06-01%20at%202.55.57%20PM.png" width=600/>
 
 A complete version of easy_run.py can be seen below for reference. This was completed using MacOS. When using 
 Windows it may be necessary to replace "/" with either "//" or "\". 
 
-![Complete easy_run.py](https://github.com/caballe4/SU-ECE-20-4/blob/master/Images_For_README/Screen%20Shot%202020-06-01%20at%202.59.57%20PM.png)
+<img src="https://github.com/caballe4/SU-ECE-20-4/blob/master/Images_For_README/Screen%20Shot%202020-06-01%20at%202.59.57%20PM.png" height=425 width=725/>
 
 #### Line Changes
 Specific paths must be changed depending on the operating system
 If running recognition on Windows, line 72 needs to be commented out, and line 74 needs to be uncommented.
-![](https://github.com/caballe4/SU-ECE-20-4/blob/master/Images_For_README/Screen%20Shot%202020-06-01%20at%208.30.17%20PM.png)
 
+<img src="https://github.com/caballe4/SU-ECE-20-4/blob/master/Images_For_README/Screen%20Shot%202020-06-01%20at%208.30.17%20PM.png" width=600/>
 
 In line 945, the image path needs to be updated to the current image directory path.
-![](https://github.com/caballe4/SU-ECE-20-4/blob/master/Images_For_README/Screen%20Shot%202020-06-01%20at%208.33.29%20PM.png)
 
+<img src="https://github.com/caballe4/SU-ECE-20-4/blob/master/Images_For_README/Screen%20Shot%202020-06-01%20at%208.33.29%20PM.png" width=600/>
 
 In line 1087, after the editing of the images takes place, the format that it is in, isn't recognized by the
 Mask R-CNN template generator. Therefore, comment out 1087 if you would like to run with Mask R-CNN. 
-![](https://github.com/caballe4/SU-ECE-20-4/blob/master/Images_For_README/Screen%20Shot%202020-06-01%20at%208.33.56%20PM.png)
 
+<img src="https://github.com/caballe4/SU-ECE-20-4/blob/master/Images_For_README/Screen%20Shot%202020-06-01%20at%208.33.56%20PM.png" width=600/>
 #### Command Line
 Once all this has been complete, Recognition.py can be run in a MacOS terminal or Windows Powershell with the command
 
