@@ -44,7 +44,7 @@ In order to install the correct software for markov clustering onto the system u
 ### Line Changes
 Specific paths must be changed depending on the operating system
 If running recognition on Windows, line 72 needs to be commented out, and line 74 needs to be uncommented.
-![](https://github.com/caballe4/SU-ECE-20-4/blob/master/Images_For_README/Screen%20Shot%202020-06-01%20at%208.30.17%20PM.png)
+![](https://github.com/caballe4/SU-ECE-20-4/blob/master/Images_For_README/Screen%20Shot%202020-06-01%20at%208.30.17%20PM.png =100x100)
 
 
 In line 945, the image path needs to be updated to the current image directory path.
