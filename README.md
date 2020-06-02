@@ -77,5 +77,12 @@ In line 1087, after the editing of the images takes place, the format that it is
 Mask R-CNN template generator. Therefore, comment out 1087 if you would like to run with Mask R-CNN. 
 ![](https://github.com/caballe4/SU-ECE-20-4/blob/master/Images_For_README/Screen%20Shot%202020-06-01%20at%208.33.56%20PM.png)
 
+#### Command Line
+Once all this has been complete, Recognition.py can be run in a MacOS terminal or Windows Powershell with the command
+
+```bash
+python easy_run.py
+```
+
 ## TODOs
 
